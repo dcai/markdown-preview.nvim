@@ -2,8 +2,8 @@ const fs = require('node:fs')
 const path = require('node:path')
 const logger = require('../src/util/logger.ts').default('app/routes')
 
-const OUT_DIR = path.join(__dirname, 'out')
-const STATIC_DIR = path.join(__dirname, '_static')
+const APP_DIR = path.resolve(process.env.MKDP_APP_DIR || __dirname)
+const OUT_DIR = path.join(APP_DIR, 'out')
 const routes = []
 
 const contentTypes = {
@@ -124,7 +124,7 @@ use((req, res, next) => {
 })
 
 // /_static/path
-use(serveStatic(__dirname, '/_static/'))
+use(serveStatic(APP_DIR, '/_static/'))
 
 // Local Markdown images deliberately resolve outside the plugin directory.
 use(async (req, res, next) => {

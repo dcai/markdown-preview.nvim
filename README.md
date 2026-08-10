@@ -18,7 +18,7 @@ Differences from upstream:
 - Uses one root `package.json` and npm lockfile. Yarn support and duplicate app manifests are removed.
 - Runs the local Node.js runtime directly. Prebuilt `pkg` binaries, binary downloads, and release-packaging scripts are removed.
 - Uses Vite to build the static React preview instead of Next.js.
-- Commits the built `app/out/` preview so plugin-manager installs need only runtime dependencies (`npm install --omit=dev`).
+- Commits the built browser preview (`app/out/`) and bundled Node runtime (`app/runtime/`), so plugin-manager installs need no npm install step.
 - Removes the legacy `sequence-diagrams` renderer and its old browser dependencies. Mermaid sequence diagrams are still supported.
 - Uses current Node/React/Vite, Socket.IO, and Markdown-It dependencies, and Node's built-in TypeScript type stripping instead of a TypeScript compilation step.
 
@@ -48,14 +48,13 @@ Main features:
 Install with [vim-plug](https://github.com/junegunn/vim-plug):
 
 ```vim
-Plug 'dcai/markdown-preview.nvim', { 'do': 'npm install --omit=dev', 'for': ['markdown', 'vim-plug']}
+Plug 'dcai/markdown-preview.nvim', { 'for': ['markdown', 'vim-plug']}
 ```
 
 Or install with [dein](https://github.com/Shougo/dein.vim):
 
 ```vim
-call dein#add('dcai/markdown-preview.nvim', {'on_ft': ['markdown', 'pandoc.markdown', 'rmd'],
-					\ 'build': 'sh -c "npm install --omit=dev"' })
+call dein#add('dcai/markdown-preview.nvim', {'on_ft': ['markdown', 'pandoc.markdown', 'rmd']})
 ```
 
 Or with [lazy.nvim](https://github.com/folke/lazy.nvim):
@@ -66,7 +65,6 @@ Add this in your `init.lua or plugins.lua`
 {
   "dcai/markdown-preview.nvim",
   cmd = { "MarkdownPreviewToggle", "MarkdownPreview", "MarkdownPreviewStop" },
-  build = "npm install --omit=dev",
   init = function()
     vim.g.mkdp_filetypes = { "markdown" }
   end,
@@ -79,7 +77,7 @@ Or with [Packer.nvim](https://github.com/wbthomason/packer.nvim):
 Add this in your `init.lua or plugins.lua`
 
 ```lua
-use({ "dcai/markdown-preview.nvim", run = "npm install --omit=dev", setup = function() vim.g.mkdp_filetypes = { "markdown" } end, ft = { "markdown" }, })
+use({ "dcai/markdown-preview.nvim", setup = function() vim.g.mkdp_filetypes = { "markdown" } end, ft = { "markdown" }, })
 ```
 
 Or by hand:
@@ -94,11 +92,17 @@ add plugin to the `~/.local/share/nvim/site/pack/packer/start/` directory:
 cd ~/.local/share/nvim/site/pack/packer/start/
 git clone https://github.com/dcai/markdown-preview.nvim.git
 cd markdown-preview.nvim
+```
+
+Please make sure that you have installed Node.js 24 or newer. No npm install is needed to use the committed build artifacts.
+
+For development, install dependencies and regenerate both committed bundles:
+
+```bash
 npm install
 npm run build
 ```
 
-Please make sure that you have installed Node.js 24 or newer and `npm`.
 Open `nvim` and run `:PackerInstall` to make it workable
 
 ### MarkdownPreview Config:

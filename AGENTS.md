@@ -13,16 +13,16 @@ mise install
 # Install development dependencies (run once)
 npm install
 
-# Install only server runtime dependencies for plugin-manager installs
-npm install --omit=dev
-
 # Syntax-check Node-executed TypeScript
 npm run lint
 
 # Build the Vite frontend (app/ -> app/out/)
 npm run build-app
 
-# Full local build
+# Build the bundled Node runtime (app/ -> app/runtime/server.cjs)
+npm run build-server
+
+# Build both committed artifacts
 npm run build
 
 # `lint` uses Node.js syntax checks. There is no separate ESLint/TSLint setup.
@@ -35,13 +35,13 @@ There is no automated test runner or test framework in this repository, so there
 
 ## Development Boundaries
 
-- Node 24+ runs the erasable TypeScript under `src/` directly. Keep runtime imports explicit, including the `.ts` extension for project-owned modules.
-- Edit the browser app under `app/pages/`; `npm run build-app` regenerates the static export in `app/out/`.
-- `app/out/` is a build artifact. Do not hand-edit generated output; regenerate it when source changes require it.
-- This repository has one root `package.json` and lockfile. Runtime dependencies stay in `dependencies`; frontend build dependencies stay in `devDependencies` because the generated `app/out/` is committed.
-- Use Vite for the browser build. The app is a single static React page served by `app/server.js`; it has no SSR, API routes, or framework routing needs.
-- Plugin-manager installs must run `npm install --omit=dev` from the repository root. `app/index.js` resolves those root dependencies by walking up from `app/`.
-- Do not add a nested `app/package.json` or lockfile. It duplicates the dependency graph and can leave app-only installs missing a runtime dependency.
+- Node 24+ runs the erasable TypeScript under `src/` directly while developing. Keep runtime imports explicit, including the `.ts` extension for project-owned modules.
+- Edit browser code under `app/pages/`; `npm run build-app` regenerates the static export in `app/out/`. Edit server code under `app/` and `src/`; `npm run build-server` regenerates `app/runtime/server.cjs`.
+- `app/out/` and `app/runtime/` are committed build artifacts. Do not hand-edit them; regenerate the relevant artifact after source changes.
+- This repository has one root `package.json` and lockfile. All dependencies are development/build dependencies because installed plugin users run the committed Node bundle without `node_modules/`.
+- Use Vite for both builds: the browser app is a single static React page, and the Node runtime is a bundled SSR build. The app has no SSR pages, API routes, or framework routing needs.
+- Plugin-manager installs require Node.js 24+ but no npm install step.
+- Do not add a nested `app/package.json` or lockfile. It duplicates the dependency graph.
 - Node.js is managed by `mise.toml`; use `mise install` rather than nvm. Run commands through `mise exec -- ...` when the current shell is not mise-activated.
 
 ## Architecture Overview
@@ -63,9 +63,9 @@ Vim/Neovim  --RPC (stdio)-->  Node Server  --WebSocket-->  Browser
 
 ### Layer 2: Node.js Server (the RPC target and HTTP/WS server)
 
-Entry: **`app/index.js`** -> **`app/server.js`**
+Entry: **`app/index.js`** -> **`app/runtime/server.cjs`** (generated from `app/server.js`)
 
-The server uses normal Node.js module resolution from the root `node_modules/` directory; do not reintroduce the old VM module loader or dependency preloading layer.
+Vite bundles all Node dependencies and project TypeScript into `app/runtime/server.cjs`. Do not add a runtime `node_modules/` requirement or reintroduce the old VM module loader.
 
 - **`src/attach/index.ts`** — Attaches to Neovim via `@chemzqm/neovim` RPC. Handles incoming notifications (`refresh_content`, `close_page`, `open_browser`) and requests (`close_all_pages`). Reads buffer content and Vim variables, then delegates to the app's `refreshPage`/`closePage`/`openBrowser` callbacks.
 - **`app/server.js`** — Creates HTTP server + socket.io WebSocket server. The HTTP server uses `app/routes.js` for routing. WebSocket connections are keyed by `bufnr` and receive `refresh_content` events. Handles browser opening (custom function or default system browser).
@@ -74,11 +74,12 @@ The server uses normal Node.js module resolution from the root `node_modules/` d
 
 ### Layer 3: Browser (Vite React app)
 
-- **`app/pages/index.jsx`** — The single preview page. Connects via socket.io, receives markdown content and cursor position, renders with markdown-it using ~15 plugins (KaTeX, mermaid, PlantUML, chart.js, sequence diagrams, flowcharts, dot/graphviz, emoji, task lists, footnotes, TOC, anchors, image sizing, line numbers). Handles synchronized scrolling and theme toggling.
+- **`app/pages/index.jsx`** — The single preview page. Connects via socket.io, receives markdown content and cursor position, renders with markdown-it using ~15 plugins (KaTeX, Mermaid, PlantUML, Chart.js, flowcharts, dot/graphviz, emoji, task lists, footnotes, TOC, anchors, image sizing, line numbers). Handles synchronized scrolling and theme toggling.
 - **`app/pages/*.js`** — Individual markdown-it plugin wrappers (katex, mermaid, chart, plantuml, flowchart, dot, image, scroll, meta, linenumbers, markdown-it-imsize, utils, blockPlantuml). Each exports a markdown-it plugin function and optionally a post-render function.
 - **`app/_static/`** — Vendored JS/CSS for browser-side rendering (KaTeX, mermaid, highlight.js, flowchart.js, viz.js, raphael, etc.). Loaded as browser globals by `app/index.html`.
 - **`app/index.html`** and **`app/main.jsx`** — Vite entry point and React mount. Static CSS and browser scripts remain in `app/_static/` and are loaded by `index.html`.
-- **`app/out/`** — Vite build output. Committed to repo. Generated by `npm run build-app`.
+- **`app/out/`** — Vite browser build output. Committed to repo. Generated by `npm run build-app`.
+- **`app/runtime/server.cjs`** — Vite-bundled Node server and dependencies. Committed to repo. Generated by `npm run build-server`.
 
 ## Key Patterns
 
