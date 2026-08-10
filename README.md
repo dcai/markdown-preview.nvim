@@ -8,6 +8,20 @@
 
 Preview Markdown in your modern browser with synchronised scrolling and flexible configuration.
 
+### This fork
+
+This is a fork of [iamcco/markdown-preview.nvim](https://github.com/iamcco/markdown-preview.nvim). It keeps the familiar Vim commands and preview features, while simplifying the project for local, modern Node.js development.
+
+Differences from upstream:
+
+- Requires Node.js 24 or newer and npm.
+- Uses one root `package.json` and npm lockfile. Yarn support and duplicate app manifests are removed.
+- Runs the local Node.js runtime directly. Prebuilt `pkg` binaries, binary downloads, and release-packaging scripts are removed.
+- Uses Vite to build the static React preview instead of Next.js.
+- Commits the built `app/out/` preview so plugin-manager installs need only runtime dependencies (`npm install --omit=dev`).
+- Removes the legacy `sequence-diagrams` renderer and its old browser dependencies. Mermaid sequence diagrams are still supported.
+- Uses current Node/React/Vite, Socket.IO, and Markdown-It dependencies, and Node's built-in TypeScript type stripping instead of a TypeScript compilation step.
+
 Main features:
 
 - Cross platform (MacOS/Linux/Windows)
@@ -34,13 +48,13 @@ Main features:
 Install with [vim-plug](https://github.com/junegunn/vim-plug):
 
 ```vim
-Plug 'iamcco/markdown-preview.nvim', { 'do': 'npm install --omit=dev', 'for': ['markdown', 'vim-plug']}
+Plug 'dcai/markdown-preview.nvim', { 'do': 'npm install --omit=dev', 'for': ['markdown', 'vim-plug']}
 ```
 
 Or install with [dein](https://github.com/Shougo/dein.vim):
 
 ```vim
-call dein#add('iamcco/markdown-preview.nvim', {'on_ft': ['markdown', 'pandoc.markdown', 'rmd'],
+call dein#add('dcai/markdown-preview.nvim', {'on_ft': ['markdown', 'pandoc.markdown', 'rmd'],
 					\ 'build': 'sh -c "npm install --omit=dev"' })
 ```
 
@@ -50,7 +64,7 @@ Add this in your `init.lua or plugins.lua`
 
 ```lua
 {
-  "iamcco/markdown-preview.nvim",
+  "dcai/markdown-preview.nvim",
   cmd = { "MarkdownPreviewToggle", "MarkdownPreview", "MarkdownPreviewStop" },
   build = "npm install --omit=dev",
   init = function()
@@ -65,20 +79,20 @@ Or with [Packer.nvim](https://github.com/wbthomason/packer.nvim):
 Add this in your `init.lua or plugins.lua`
 
 ```lua
-use({ "iamcco/markdown-preview.nvim", run = "npm install --omit=dev", setup = function() vim.g.mkdp_filetypes = { "markdown" } end, ft = { "markdown" }, })
+use({ "dcai/markdown-preview.nvim", run = "npm install --omit=dev", setup = function() vim.g.mkdp_filetypes = { "markdown" } end, ft = { "markdown" }, })
 ```
 
 Or by hand:
 
 ```vim
-use {'iamcco/markdown-preview.nvim'}
+use {'dcai/markdown-preview.nvim'}
 ```
 
 add plugin to the `~/.local/share/nvim/site/pack/packer/start/` directory:
 
 ```vim
 cd ~/.local/share/nvim/site/pack/packer/start/
-git clone https://github.com/iamcco/markdown-preview.nvim.git
+git clone https://github.com/dcai/markdown-preview.nvim.git
 cd markdown-preview.nvim
 npm install
 npm run build
