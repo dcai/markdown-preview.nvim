@@ -1,10 +1,10 @@
-<h1 align="center"> ✨ Markdown Preview for (Neo)vim ✨ </h1>
+<h1 align="center"> ✨ Markdown Preview for Neovim ✨ </h1>
 
 > Powered by ❤️
 
 ### Introduction
 
-> It only works on Vim >= 8.1 and Neovim
+> It requires Neovim and Node.js 24 or newer.
 
 Preview Markdown in your modern browser with synchronised scrolling and flexible configuration.
 
@@ -14,6 +14,8 @@ This is a fork of [iamcco/markdown-preview.nvim](https://github.com/iamcco/markd
 
 Differences from upstream:
 
+- Requires Neovim; Vim 8 support and its RPC compatibility layer are removed.
+- Uses a Lua plugin entrypoint and `require('mkdp').setup({...})` configuration. Legacy `g:mkdp_*` options are removed.
 - Requires Node.js 24 or newer and npm.
 - Uses one root `package.json` and npm lockfile. Yarn support and duplicate app manifests are removed.
 - Runs the local Node.js runtime directly. Prebuilt `pkg` binaries, binary downloads, and release-packaging scripts are removed.
@@ -45,19 +47,7 @@ Main features:
 
 ### Installation & Usage
 
-Install with [vim-plug](https://github.com/junegunn/vim-plug):
-
-```vim
-Plug 'dcai/markdown-preview.nvim', { 'for': ['markdown', 'vim-plug']}
-```
-
-Or install with [dein](https://github.com/Shougo/dein.vim):
-
-```vim
-call dein#add('dcai/markdown-preview.nvim', {'on_ft': ['markdown', 'pandoc.markdown', 'rmd']})
-```
-
-Or with [lazy.nvim](https://github.com/folke/lazy.nvim):
+Install with [lazy.nvim](https://github.com/folke/lazy.nvim):
 
 Add this in your `init.lua or plugins.lua`
 
@@ -65,8 +55,8 @@ Add this in your `init.lua or plugins.lua`
 {
   "dcai/markdown-preview.nvim",
   cmd = { "MarkdownPreviewToggle", "MarkdownPreview", "MarkdownPreviewStop" },
-  init = function()
-    vim.g.mkdp_filetypes = { "markdown" }
+  config = function()
+    require('mkdp').setup({ filetypes = { 'markdown' } })
   end,
   ft = { "markdown" },
 },
@@ -77,18 +67,12 @@ Or with [Packer.nvim](https://github.com/wbthomason/packer.nvim):
 Add this in your `init.lua or plugins.lua`
 
 ```lua
-use({ "dcai/markdown-preview.nvim", setup = function() vim.g.mkdp_filetypes = { "markdown" } end, ft = { "markdown" }, })
+use({ "dcai/markdown-preview.nvim", config = function() require('mkdp').setup({ filetypes = { 'markdown' } }) end })
 ```
 
-Or by hand:
+Or clone it into Neovim's package directory:
 
-```vim
-use {'dcai/markdown-preview.nvim'}
-```
-
-add plugin to the `~/.local/share/nvim/site/pack/packer/start/` directory:
-
-```vim
+```sh
 cd ~/.local/share/nvim/site/pack/packer/start/
 git clone https://github.com/dcai/markdown-preview.nvim.git
 cd markdown-preview.nvim
@@ -103,139 +87,50 @@ npm install
 npm run build
 ```
 
-Open `nvim` and run `:PackerInstall` to make it workable
-
 ### MarkdownPreview Config:
 
-```vim
-" set to 1, nvim will open the preview window after entering the Markdown buffer
-" default: 0
-let g:mkdp_auto_start = 0
-
-" set to 1, the nvim will auto close current preview window when changing
-" from Markdown buffer to another buffer
-" default: 1
-let g:mkdp_auto_close = 1
-
-" set to 1, Vim will refresh Markdown when saving the buffer or
-" when leaving insert mode. Default 0 is auto-refresh Markdown as you edit or
-" move the cursor
-" default: 0
-let g:mkdp_refresh_slow = 0
-
-" set to 1, the MarkdownPreview command can be used for all files,
-" by default it can be use in Markdown files only
-" default: 0
-let g:mkdp_command_for_global = 0
-
-" set to 1, the preview server is available to others in your network.
-" By default, the server listens on localhost (127.0.0.1)
-" default: 0
-let g:mkdp_open_to_the_world = 0
-
-" use custom IP to open preview page.
-" Useful when you work in remote Vim and preview on local browser.
-" For more details see: https://github.com/iamcco/markdown-preview.nvim/pull/9
-" default empty
-let g:mkdp_open_ip = ''
-
-" specify browser to open preview page
-" for path with space
-" valid: `/path/with\ space/xxx`
-" invalid: `/path/with\\ space/xxx`
-" default: ''
-let g:mkdp_browser = ''
-
-" set to 1, echo preview page URL in command line when opening preview page
-" default is 0
-let g:mkdp_echo_preview_url = 0
-
-" a custom Vim function name to open preview page
-" this function will receive URL as param
-" default is empty
-let g:mkdp_browserfunc = ''
-
-" options for Markdown rendering
-" mkit: markdown-it options for rendering
-" katex: KaTeX options for math
-" uml: markdown-it-plantuml options
-" maid: mermaid options
-" disable_sync_scroll: whether to disable sync scroll, default 0
-" sync_scroll_type: 'middle', 'top' or 'relative', default value is 'middle'
-"   middle: means the cursor position is always at the middle of the preview page
-"   top: means the Vim top viewport always shows up at the top of the preview page
-"   relative: means the cursor position is always at relative positon of the preview page
-" hide_yaml_meta: whether to hide YAML metadata, default is 1
-" content_editable: if enable content editable for preview page, default: v:false
-" disable_filename: if disable filename header for preview page, default: 0
-let g:mkdp_preview_options = {
-    \ 'mkit': {},
-    \ 'katex': {},
-    \ 'uml': {},
-    \ 'maid': {},
-    \ 'disable_sync_scroll': 0,
-    \ 'sync_scroll_type': 'middle',
-    \ 'hide_yaml_meta': 1,
-    \ 'flowchart_diagrams': {},
-    \ 'content_editable': v:false,
-    \ 'disable_filename': 0,
-    \ 'toc': {}
-    \ }
-
-" use a custom Markdown style. Must be an absolute path
-" like '/Users/username/markdown.css' or expand('~/markdown.css')
-let g:mkdp_markdown_css = ''
-
-" use a custom highlight style. Must be an absolute path
-" like '/Users/username/highlight.css' or expand('~/highlight.css')
-let g:mkdp_highlight_css = ''
-
-" use a custom port to start server or empty for random
-let g:mkdp_port = ''
-
-" preview page title
-" ${name} will be replace with the file name
-let g:mkdp_page_title = '「${name}」'
-
-" use a custom location for images
-let g:mkdp_images_path = /home/user/.markdown_images
-
-" recognized filetypes
-" these filetypes will have MarkdownPreview... commands
-let g:mkdp_filetypes = ['markdown']
-
-" set default theme (dark or light)
-" By default the theme is defined according to the preferences of the system
-let g:mkdp_theme = 'dark'
-
-" combine preview window
-" default: 0
-" if enable it will reuse previous opened preview window when you preview markdown file.
-" ensure to set let g:mkdp_auto_close = 0 if you have enable this option
-let g:mkdp_combine_preview = 0
-
-" auto refetch combine preview contents when change markdown buffer
-" only when g:mkdp_combine_preview is 1
-let g:mkdp_combine_preview_auto_refresh = 1
+```lua
+require('mkdp').setup({
+  auto_start = false,
+  auto_close = true,
+  refresh_slow = false,
+  command_for_global = false,
+  open_to_the_world = false,
+  open_ip = '',
+  browser = '',
+  open = function(url)
+    vim.ui.open(url)
+  end,
+  echo_preview_url = false,
+  preview_options = {
+    mkit = {}, katex = {}, uml = {}, maid = {},
+    disable_sync_scroll = 0, sync_scroll_type = 'middle',
+    hide_yaml_meta = 1, flowchart_diagrams = {},
+    content_editable = false, disable_filename = 0, toc = {},
+  },
+  markdown_css = '',
+  highlight_css = '',
+  port = nil,
+  page_title = '「${name}」',
+  images_path = '/home/user/.markdown_images',
+  filetypes = { 'markdown' },
+  theme = 'dark',
+  combine_preview = false,
+  combine_preview_auto_refresh = true,
+})
 ```
 
 Mappings:
 
-```vim
-" normal/insert
-<Plug>MarkdownPreview
-<Plug>MarkdownPreviewStop
-<Plug>MarkdownPreviewToggle
-
-" example
-nmap <C-s> <Plug>MarkdownPreview
-nmap <M-s> <Plug>MarkdownPreviewStop
-nmap <C-p> <Plug>MarkdownPreviewToggle
+```lua
+vim.keymap.set('n', '<C-s>', '<Plug>MarkdownPreview')
+vim.keymap.set('n', '<M-s>', '<Plug>MarkdownPreviewStop')
+vim.keymap.set('n', '<C-p>', '<Plug>MarkdownPreviewToggle')
 ```
 
 Commands:
 
-```vim
+```text
 " Start the preview
 :MarkdownPreview
 
@@ -406,27 +301,7 @@ There is a button hidden in the header to change the theme. Place your mouse ove
 
 Answer: Add the following to your Neovim init script:
 
-*Linux*
-```vimscript
-  function OpenMarkdownPreview (url)
-    execute "silent ! firefox --new-window " . a:url
-  endfunction
-  let g:mkdp_browserfunc = 'OpenMarkdownPreview'
-```
-Replace `firefox` with `chrome` if you prefer. Both browsers recognize the `--new-window` option.
-
-*macOS*
-```vimscript
-  function OpenMarkdownPreview (url)
-    execute "silent ! open -a Firefox -n --args --new-window " . a:url
-  endfunction
-  let g:mkdp_browserfunc = 'OpenMarkdownPreview'
-```
-Replace `Firefox` with `Google\ Chrome` or `Brave\ Browser` if you prefer. They all recognize the `--new-window` option.
-
-### About Vim Support
-
-Vim support is powered by [@chemzqm/neovim](https://github.com/neoclide/neovim)
+Set `browser` in `require('mkdp').setup()` to your browser executable. For browser-specific CLI flags, use a shell wrapper as that executable.
 
 ### References
 

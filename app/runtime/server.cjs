@@ -3780,6 +3780,58 @@ var require_lib$4 = /* @__PURE__ */ __commonJSMin(((exports) => {
 	});
 }));
 //#endregion
+//#region ../src/attach/index.ts
+var attach_exports = /* @__PURE__ */ __exportAll({ default: () => attach_default });
+function attach_default(options) {
+	const nvim = (0, import_lib.attach)(options);
+	nvim.on("notification", async (method, args) => {
+		const bufnr = (args[0] || args).bufnr;
+		const buffer = (await nvim.buffers).find((b) => b.id === bufnr);
+		if (method === "refresh_content" && buffer) {
+			const winline = await nvim.call("winline");
+			const currentWindow = await nvim.window;
+			const winheight = await nvim.call("winheight", currentWindow.id);
+			const cursor = await nvim.call("getpos", ["."]);
+			const config = await nvim.executeLua("return require(\"mkdp\").get_config()");
+			const renderOpts = config.preview_options;
+			const pageTitle = config.page_title;
+			const theme = config.theme;
+			const name = await buffer.name;
+			const content = await buffer.getLines();
+			const currentBuffer = await nvim.buffer;
+			app.refreshPage({
+				bufnr,
+				data: {
+					options: renderOpts,
+					isActive: currentBuffer.id === buffer.id,
+					winline,
+					winheight,
+					cursor,
+					pageTitle,
+					theme,
+					name,
+					content
+				}
+			});
+		} else if (method === "close_page") app.closePage({ bufnr });
+		else if (method === "open_browser") app.openBrowser({ bufnr });
+	});
+	nvim.on("request", (method, args, resp) => {
+		if (method === "close_all_pages") app.closeAllPages();
+		resp.send();
+	});
+	return {
+		nvim,
+		init: (param) => {
+			app = param;
+		}
+	};
+}
+var import_lib, app;
+var init_attach = __esmMin((() => {
+	import_lib = require_lib$4();
+}));
+//#endregion
 //#region ../node_modules/ms/index.js
 var require_ms$1 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	/**
@@ -9762,64 +9814,6 @@ var init_logger = __esmMin((() => {
 	});
 }));
 //#endregion
-//#region ../src/attach/index.ts
-var attach_exports = /* @__PURE__ */ __exportAll({ default: () => attach_default });
-function attach_default(options) {
-	const nvim = (0, import_lib.attach)(options);
-	nvim.on("notification", async (method, args) => {
-		const bufnr = (args[0] || args).bufnr;
-		const buffer = (await nvim.buffers).find((b) => b.id === bufnr);
-		if (method === "refresh_content" && buffer) {
-			const winline = await nvim.call("winline");
-			const currentWindow = await nvim.window;
-			const winheight = await nvim.call("winheight", currentWindow.id);
-			const cursor = await nvim.call("getpos", ".");
-			const renderOpts = await nvim.getVar("mkdp_preview_options");
-			const pageTitle = await nvim.getVar("mkdp_page_title");
-			const theme = await nvim.getVar("mkdp_theme");
-			const name = await buffer.name;
-			const content = await buffer.getLines();
-			const currentBuffer = await nvim.buffer;
-			app.refreshPage({
-				bufnr,
-				data: {
-					options: renderOpts,
-					isActive: currentBuffer.id === buffer.id,
-					winline,
-					winheight,
-					cursor,
-					pageTitle,
-					theme,
-					name,
-					content
-				}
-			});
-		} else if (method === "close_page") app.closePage({ bufnr });
-		else if (method === "open_browser") app.openBrowser({ bufnr });
-	});
-	nvim.on("request", (method, args, resp) => {
-		if (method === "close_all_pages") app.closeAllPages();
-		resp.send();
-	});
-	nvim.channelId.then(async (channelId) => {
-		await nvim.setVar("mkdp_node_channel_id", channelId);
-	}).catch((e) => {
-		log.error("channelId: ", e);
-	});
-	return {
-		nvim,
-		init: (param) => {
-			app = param;
-		}
-	};
-}
-var import_lib, log, app;
-var init_attach = __esmMin((() => {
-	import_lib = require_lib$4();
-	init_logger();
-	log = logger("attach");
-}));
-//#endregion
 //#region nvim.js
 var require_nvim = /* @__PURE__ */ __commonJSMin(((exports) => {
 	var attach = (init_attach(), __toCommonJS(attach_exports)).default;
@@ -9831,11 +9825,11 @@ var require_nvim = /* @__PURE__ */ __commonJSMin(((exports) => {
 	});
 	process.on("uncaughtException", function(err) {
 		let msg = `${MSG_PREFIX} uncaught exception: ` + err.stack;
-		if (plugin.nvim) plugin.nvim.call("mkdp#util#echo_messages", ["Error", msg.split("\n")]);
+		if (plugin.nvim) plugin.nvim.executeLua("require(\"mkdp\").echo_messages(...)", ["Error", msg.split("\n")]);
 		logger.error("uncaughtException", err.stack);
 	});
 	process.on("unhandledRejection", function(reason, p) {
-		if (plugin.nvim) plugin.nvim.call("mkdp#util#echo_messages", ["Error", [`${MSG_PREFIX} UnhandledRejection`, `${reason}`]]);
+		if (plugin.nvim) plugin.nvim.executeLua("require(\"mkdp\").echo_messages(...)", ["Error", [`${MSG_PREFIX} UnhandledRejection`, `${reason}`]]);
 		logger.error("unhandledRejection ", p, reason);
 	});
 	exports.plugin = plugin;
@@ -20634,7 +20628,7 @@ var __vite_optional_peer_dep_bufferutil_ws_exports = /* @__PURE__ */ __exportAll
 var __vite_optional_peer_dep_bufferutil_ws_default;
 var init___vite_optional_peer_dep_bufferutil_ws = __esmMin((() => {
 	__vite_optional_peer_dep_bufferutil_ws_default = {};
-	throw new Error(`Could not resolve "bufferutil" imported by "ws".`);
+	throw new Error(`Could not resolve "bufferutil" imported by "ws". Is it installed?`);
 }));
 //#endregion
 //#region node_modules/ws/lib/buffer-util.js
@@ -21126,7 +21120,7 @@ var __vite_optional_peer_dep_utf_8_validate_ws_exports = /* @__PURE__ */ __expor
 var __vite_optional_peer_dep_utf_8_validate_ws_default;
 var init___vite_optional_peer_dep_utf_8_validate_ws = __esmMin((() => {
 	__vite_optional_peer_dep_utf_8_validate_ws_default = {};
-	throw new Error(`Could not resolve "utf-8-validate" imported by "ws".`);
+	throw new Error(`Could not resolve "utf-8-validate" imported by "ws". Is it installed?`);
 }));
 //#endregion
 //#region node_modules/ws/lib/validation.js
@@ -31117,24 +31111,26 @@ exports.run = function() {
 	const { getIP } = (init_getIP(), __toCommonJS(getIP_exports));
 	const routes = require_routes();
 	let clients = {};
+	const getConfig = () => plugin.nvim.executeLua("return require(\"mkdp\").get_config()");
 	const openUrl = (url, browser) => {
 		opener(url, browser).on("error", (err) => {
 			const match = (err.message || "").match(/\s*spawn\s+(.+)\s+ENOENT\s*/);
-			if (match) plugin.nvim.call("mkdp#util#echo_messages", ["Error", [`[markdown-preview.nvim]: Can not open browser by using ${match[1]} command`]]);
-			else plugin.nvim.call("mkdp#util#echo_messages", ["Error", [err.name, err.message]]);
+			if (match) plugin.nvim.executeLua("require(\"mkdp\").echo_messages(...)", ["Error", [`[markdown-preview.nvim]: Can not open browser by using ${match[1]} command`]]);
+			else plugin.nvim.executeLua("require(\"mkdp\").echo_messages(...)", ["Error", [err.name, err.message]]);
 		});
 	};
 	const update_clients_active_var = () => {
-		if (Object.values(clients).some((cs) => cs.some((c) => c.connected))) plugin.nvim.setVar("mkdp_clients_active", 1);
-		else plugin.nvim.setVar("mkdp_clients_active", 0);
+		if (Object.values(clients).some((cs) => cs.some((c) => c.connected))) plugin.nvim.executeLua("require(\"mkdp\").set_clients_active(...)", [true]);
+		else plugin.nvim.executeLua("require(\"mkdp\").set_clients_active(...)", [false]);
 	};
 	const server = http.createServer(async (req, res) => {
 		req.plugin = plugin;
 		req.bufnr = (req.headers.referer || req.url).replace(/[?#].*$/, "").split("/").pop();
 		req.asPath = req.url.replace(/[?#].*$/, "");
-		req.mkcss = await plugin.nvim.getVar("mkdp_markdown_css");
-		req.hicss = await plugin.nvim.getVar("mkdp_highlight_css");
-		req.custImgPath = await plugin.nvim.getVar("mkdp_images_path");
+		const config = await getConfig();
+		req.mkcss = config.markdown_css;
+		req.hicss = config.highlight_css;
+		req.custImgPath = config.images_path;
 		routes(req, res);
 	});
 	websocket(server).on("connection", async (client) => {
@@ -31149,10 +31145,11 @@ exports.run = function() {
 				const winline = await plugin.nvim.call("winline");
 				const currentWindow = await plugin.nvim.window;
 				const winheight = await plugin.nvim.call("winheight", currentWindow.id);
-				const cursor = await plugin.nvim.call("getpos", ".");
-				const options = await plugin.nvim.getVar("mkdp_preview_options");
-				const pageTitle = await plugin.nvim.getVar("mkdp_page_title");
-				const theme = await plugin.nvim.getVar("mkdp_theme");
+				const cursor = await plugin.nvim.call("getpos", ["."]);
+				const config = await getConfig();
+				const options = config.preview_options;
+				const pageTitle = config.page_title;
+				const theme = config.theme;
 				const name = await buffer.name;
 				const content = await buffer.getLines();
 				const currentBuffer = await plugin.nvim.buffer;
@@ -31176,9 +31173,10 @@ exports.run = function() {
 		});
 	});
 	async function startServer() {
-		const openToTheWord = await plugin.nvim.getVar("mkdp_open_to_the_world");
+		const config = await getConfig();
+		const openToTheWord = config.open_to_the_world;
 		const host = openToTheWord ? "0.0.0.0" : "127.0.0.1";
-		let port = await plugin.nvim.getVar("mkdp_port");
+		let port = config.port;
 		port = port || 8080 + Number(`${Date.now()}`.slice(-3));
 		server.listen({
 			host,
@@ -31211,7 +31209,8 @@ exports.run = function() {
 				clients = {};
 			}
 			async function openBrowser({ bufnr }) {
-				if (await plugin.nvim.getVar("mkdp_combine_preview") && Object.values(clients).some((cs) => cs.some((c) => c.connected))) {
+				const config = await getConfig();
+				if (config.combine_preview && Object.values(clients).some((cs) => cs.some((c) => c.connected))) {
 					logger.info(`combine preview page: `, bufnr);
 					Object.values(clients).forEach((cs) => {
 						cs.forEach((c) => {
@@ -31219,19 +31218,15 @@ exports.run = function() {
 						});
 					});
 				} else {
-					const openIp = await plugin.nvim.getVar("mkdp_open_ip");
+					const openIp = config.open_ip;
 					const url = `http://${openIp !== "" ? openIp : openToTheWord ? getIP() : "localhost"}:${port}/page/${bufnr}`;
-					const browserfunc = await plugin.nvim.getVar("mkdp_browserfunc");
-					if (browserfunc !== "") {
-						logger.info(`open page [${browserfunc}]: `, url);
-						plugin.nvim.call(browserfunc, [url]);
-					} else {
-						const browser = await plugin.nvim.getVar("mkdp_browser");
-						logger.info(`open page [${browser || "default"}]: `, url);
+					const browser = config.browser;
+					logger.info(`open page [${browser || "default"}]: `, url);
+					if (!await plugin.nvim.executeLua("return require(\"mkdp\").open_url(...)", [url])) {
 						if (browser !== "") openUrl(url, browser);
 						else openUrl(url);
 					}
-					if (await plugin.nvim.getVar("mkdp_echo_preview_url")) plugin.nvim.call("mkdp#util#echo_url", [url]);
+					if (config.echo_preview_url) plugin.nvim.executeLua("require(\"mkdp\").echo_url(...)", [url]);
 				}
 			}
 			plugin.init({
@@ -31240,7 +31235,7 @@ exports.run = function() {
 				closeAllPages,
 				openBrowser
 			});
-			plugin.nvim.call("mkdp#util#open_browser");
+			plugin.nvim.executeLua("require(\"mkdp\").open_browser()");
 		});
 	}
 	startServer();

@@ -28,10 +28,10 @@ npm run build
 # `lint` uses Node.js syntax checks. There is no separate ESLint/TSLint setup.
 
 # Run the plugin manually in Neovim (from the repo root)
-nvim -u test/init.vim test/test.md
+nvim -u test/init.lua test/test.md
 ```
 
-There is no automated test runner or test framework in this repository, so there is no single-test command. Use the manual Neovim fixture above for VimL/RPC/browser integration checks. When testing frontend rendering, run `npm run build-app` and then exercise the preview from Neovim.
+There is no automated test runner or test framework in this repository, so there is no single-test command. Use the manual Neovim fixture above for Lua/RPC/browser integration checks. When testing frontend rendering, run `npm run build-app` and then exercise the preview from Neovim.
 
 ## Development Boundaries
 
@@ -49,17 +49,15 @@ There is no automated test runner or test framework in this repository, so there
 The plugin has three layers that communicate via RPC (msgpack over stdio) and WebSocket (socket.io):
 
 ```
-Vim/Neovim  --RPC (stdio)-->  Node Server  --WebSocket-->  Browser
-  (VimL)                        (server.js)               (React)
+Neovim  --RPC (stdio)-->  Node Server  --WebSocket-->  Browser
+ (Lua)                     (server.js)               (React)
 ```
 
-### Layer 1: VimL (plugin entry point and RPC bridge)
+### Layer 1: Lua (plugin entry point and RPC bridge)
 
-- **`plugin/mkdp.vim`** — Defines user-facing commands (`:MarkdownPreview`, `:MarkdownPreviewStop`, `:MarkdownPreviewToggle`), `<Plug>` mappings, and initializes autocommands. All `g:mkdp_*` config variables are defaulted here.
-- **`autoload/mkdp/util.vim`** — Orchestrates preview lifecycle: starts/stops the Node server process, manages install/download of pre-built binaries, platform detection.
-- **`autoload/mkdp/rpc.vim`** — Manages the Node child process as a Vim/Neovim job. Sends `rpcnotify`/`rpcrequest` calls (`refresh_content`, `close_page`, `open_browser`, `close_all_pages`) over stdio JSON channel.
-- **`autoload/mkdp/autocmd.vim`** — Sets up buffer-local autocommands for cursor-movement-triggered refresh (or save-only if `g:mkdp_refresh_slow = 1`) and auto-close on buffer hide.
-- **`autoload/nvim/api.vim`** — Neovim API polyfill for plain Vim 8. Uses `textprop` for highlights. Only loaded when not running Neovim.
+- **`plugin/mkdp.lua`** — Loads the plugin.
+- **`lua/mkdp/init.lua`** — Defines user-facing commands (`:MarkdownPreview`, `:MarkdownPreviewStop`, `:MarkdownPreviewToggle`), `<Plug>` mappings, defaults all `g:mkdp_*` configuration, manages lifecycle and buffer autocommands, and communicates with the Node RPC server.
+- **`lua/mkdp/health.lua`** — Provides `:checkhealth mkdp`.
 
 ### Layer 2: Node.js Server (the RPC target and HTTP/WS server)
 
@@ -70,7 +68,7 @@ Vite bundles all Node dependencies and project TypeScript into `app/runtime/serv
 - **`src/attach/index.ts`** — Attaches to Neovim via `@chemzqm/neovim` RPC. Handles incoming notifications (`refresh_content`, `close_page`, `open_browser`) and requests (`close_all_pages`). Reads buffer content and Vim variables, then delegates to the app's `refreshPage`/`closePage`/`openBrowser` callbacks.
 - **`app/server.js`** — Creates HTTP server + socket.io WebSocket server. The HTTP server uses `app/routes.js` for routing. WebSocket connections are keyed by `bufnr` and receive `refresh_content` events. Handles browser opening (custom function or default system browser).
 - **`app/routes.js`** — Simple middleware chain serving: preview pages (`/page/:bufnr` -> `out/index.html`), Vite build assets (`/assets/*`), custom user CSS overrides, static assets (`/_static/*`), local images (`/_local_image_/*` resolved relative to the markdown file's directory), and 404 fallback.
-- **`app/nvim.js`** — Bootstraps the RPC attach, sets up global error handlers that report back to Vim via `mkdp#util#echo_messages`.
+- **`app/nvim.js`** — Bootstraps the RPC attach and reports global errors through the Lua module.
 
 ### Layer 3: Browser (Vite React app)
 
@@ -83,9 +81,9 @@ Vite bundles all Node dependencies and project TypeScript into `app/runtime/serv
 
 ## Key Patterns
 
-- **Local runtime**: `autoload/mkdp/rpc.vim:start_server()` resolves the Node executable with Vim's `exepath('node')` and starts `app/index.js`.
+- **Local runtime**: `lua/mkdp/init.lua` resolves the Node executable with `vim.fn.exepath('node')` and starts `app/index.js`.
 - **Per-buffer preview**: Each buffer gets its own browser page and WebSocket connection keyed by `bufnr`. The `g:mkdp_combine_preview` option reuses a single browser tab across buffers.
-- **Config flow**: All config is read from Vim global variables (`g:mkdp_*`) at request time by the Node server via RPC, not passed at startup.
+- **Config flow**: `require('mkdp').setup({...})` owns the configuration. The Node server reads it from the Lua module via RPC at request time.
 - **No framework router**: Vite builds static assets only. Actual HTTP routing is handled by the custom middleware in `app/routes.js`.
 
 ## Updating Mermaid
@@ -107,5 +105,5 @@ After updating, verify the preview still renders mermaid diagrams correctly — 
 
 - TypeScript: Node 24+ strips erasable type syntax at runtime. Keep the existing no-semicolon, single-quote style.
 - `npm run lint` syntax-checks the Node-executed TypeScript files.
-- VimL: standard Vim 8 / Neovim compatible, uses `function()` (not `def func()`)
+- Lua: use Neovim APIs and the existing two-space, single-quote style.
 - React: class components (not hooks), built by Vite from `app/index.html` and `app/main.jsx`.

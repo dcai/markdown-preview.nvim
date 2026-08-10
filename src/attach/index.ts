@@ -1,8 +1,4 @@
 import { attach, type Attach, type Neovim } from '@chemzqm/neovim'
-import logger from '../util/logger.ts'
-
-const log = logger('attach')
-
 interface IApp {
   refreshPage: ((
     param: {
@@ -42,10 +38,11 @@ export default function(options: Attach): IPlugin {
       const winline = await nvim.call('winline')
       const currentWindow = await nvim.window
       const winheight = await nvim.call('winheight', currentWindow.id)
-      const cursor = await nvim.call('getpos', '.')
-      const renderOpts = await nvim.getVar('mkdp_preview_options')
-      const pageTitle = await nvim.getVar('mkdp_page_title')
-      const theme = await nvim.getVar('mkdp_theme')
+      const cursor = await nvim.call('getpos', ['.'])
+      const config = await nvim.executeLua('return require("mkdp").get_config()')
+      const renderOpts = config.preview_options
+      const pageTitle = config.page_title
+      const theme = config.theme
       const name = await buffer.name
       const content = await buffer.getLines()
       const currentBuffer = await nvim.buffer
@@ -80,14 +77,6 @@ export default function(options: Attach): IPlugin {
     }
     resp.send()
   })
-
-  nvim.channelId
-    .then(async channelId => {
-      await nvim.setVar('mkdp_node_channel_id', channelId)
-    })
-    .catch(e => {
-      log.error('channelId: ', e)
-    })
 
   return {
     nvim,
