@@ -1,14 +1,7 @@
 function scroll (offsetTop) {
-  [document.body, document.documentElement].forEach((ele) => {
-    // eslint-disable-next-line
-    TweenLite.to(
-      ele,
-      0.4,
-      {
-        scrollTop: offsetTop,
-        ease: Power2.easeOut // eslint-disable-line
-      }
-    )
+  window.scrollTo({
+    top: offsetTop,
+    behavior: 'smooth'
   })
 }
 

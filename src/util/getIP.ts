@@ -1,8 +1,10 @@
+import os from 'node:os'
+
 export function getIP(): string {
-  const interfaces = require('os').networkInterfaces()
+  const interfaces = os.networkInterfaces()
   let IP = ''
   Object.keys(interfaces).some(devName => {
-    const iface = interfaces[devName]
+    const iface = interfaces[devName] || []
     for (const alias of iface) {
       if (
         alias.family === 'IPv4' &&
@@ -17,4 +19,3 @@ export function getIP(): string {
   })
   return IP
 }
-

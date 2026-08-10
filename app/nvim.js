@@ -1,5 +1,5 @@
-const attach = require('./lib/attach').default
-const logger = require('./lib/util/logger')('app/nvim')
+const attach = require('../src/attach/index.ts').default
+const logger = require('../src/util/logger.ts').default('app/nvim')
 
 const MSG_PREFIX = '[markdown-preview.nvim]'
 

@@ -1,8 +1,9 @@
-// change cwd to ./app
-if (!/^(\/|C:\\)snapshot/.test(__dirname)) {
-  process.chdir(__dirname)
-} else {
-  process.chdir(process.execPath.replace(/(markdown-preview.nvim.*?app).+?$/, '$1'))
-}
+const { version } = require('../package.json')
 
-require('./lib/app')
+process.chdir(__dirname)
+
+if (process.argv[2] === '--version') {
+  console.log(version)
+} else {
+  require('./server').run()
+}

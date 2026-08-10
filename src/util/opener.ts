@@ -1,15 +1,15 @@
 /*
  * fork from https://github.com/domenic/opener
  */
-import childProcess from 'child_process'
-import os from 'os'
+import childProcess from 'node:child_process'
+import os from 'node:os'
 
-module.exports = function opener(
+export default function opener(
   args: string | string[],
   tool: string | undefined
 ) {
   let platform = process.platform
-  args = [].concat(args)
+  args = ([] as string[]).concat(args)
 
   // Attempt to detect Windows Subystem for Linux (WSL).
   // WSL  itself as Linux (which works in most cases), but in

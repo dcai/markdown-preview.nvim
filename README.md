@@ -17,7 +17,6 @@ Main features:
 - [PlantUML](https://github.com/plantuml/plantuml)
 - [Mermaid](https://github.com/knsv/mermaid)
 - [Chart.js](https://github.com/chartjs/Chart.js)
-- [js-sequence-diagrams](https://github.com/bramp/js-sequence-diagrams)
 - [Flowchart](https://github.com/adrai/flowchart.js)
 - [dot](https://github.com/mdaines/viz.js)
 - [Table of contents](https://github.com/nagaozen/markdown-it-toc-done-right)
@@ -35,59 +34,25 @@ Main features:
 Install with [vim-plug](https://github.com/junegunn/vim-plug):
 
 ```vim
-" If you don't have nodejs and yarn
-" use pre build, add 'vim-plug' to the filetype list so vim-plug can update this plugin
-" see: https://github.com/iamcco/markdown-preview.nvim/issues/50
-Plug 'iamcco/markdown-preview.nvim', { 'do': { -> mkdp#util#install() }, 'for': ['markdown', 'vim-plug']}
-
-
-" If you have nodejs
-Plug 'iamcco/markdown-preview.nvim', { 'do': 'cd app && npx --yes yarn install' }
+Plug 'iamcco/markdown-preview.nvim', { 'do': 'npm install --omit=dev', 'for': ['markdown', 'vim-plug']}
 ```
 
 Or install with [dein](https://github.com/Shougo/dein.vim):
 
 ```vim
 call dein#add('iamcco/markdown-preview.nvim', {'on_ft': ['markdown', 'pandoc.markdown', 'rmd'],
-					\ 'build': 'sh -c "cd app && npx --yes yarn install"' })
+					\ 'build': 'sh -c "npm install --omit=dev"' })
 ```
 
-Or with [minpac](https://github.com/k-takata/minpac):
-
-```vim
-call minpac#add('iamcco/markdown-preview.nvim', {'do': 'packloadall! | call mkdp#util#install()'})
-```
-
-Or with [Vundle](https://github.com/vundlevim/vundle.vim):
-
-Place this in your `.vimrc` or `init.vim`,
-```vim
-Plugin 'iamcco/markdown-preview.nvim'
-```
-... then run the following in Vim (to complete the `Plugin` installation):
-```vim
-:source %
-:PluginInstall
-:call mkdp#util#install()
-```
 Or with [lazy.nvim](https://github.com/folke/lazy.nvim):
 
 Add this in your `init.lua or plugins.lua`
 
 ```lua
--- install without yarn or npm
-{
-    "iamcco/markdown-preview.nvim",
-    cmd = { "MarkdownPreviewToggle", "MarkdownPreview", "MarkdownPreviewStop" },
-    ft = { "markdown" },
-    build = function() vim.fn["mkdp#util#install"]() end,
-}
-
--- install with yarn or npm
 {
   "iamcco/markdown-preview.nvim",
   cmd = { "MarkdownPreviewToggle", "MarkdownPreview", "MarkdownPreviewStop" },
-  build = "cd app && yarn install",
+  build = "npm install --omit=dev",
   init = function()
     vim.g.mkdp_filetypes = { "markdown" }
   end,
@@ -100,13 +65,7 @@ Or with [Packer.nvim](https://github.com/wbthomason/packer.nvim):
 Add this in your `init.lua or plugins.lua`
 
 ```lua
--- install without yarn or npm
-use({
-    "iamcco/markdown-preview.nvim",
-    run = function() vim.fn["mkdp#util#install"]() end,
-})
-
-use({ "iamcco/markdown-preview.nvim", run = "cd app && npm install", setup = function() vim.g.mkdp_filetypes = { "markdown" } end, ft = { "markdown" }, })
+use({ "iamcco/markdown-preview.nvim", run = "npm install --omit=dev", setup = function() vim.g.mkdp_filetypes = { "markdown" } end, ft = { "markdown" }, })
 ```
 
 Or by hand:
@@ -121,11 +80,11 @@ add plugin to the `~/.local/share/nvim/site/pack/packer/start/` directory:
 cd ~/.local/share/nvim/site/pack/packer/start/
 git clone https://github.com/iamcco/markdown-preview.nvim.git
 cd markdown-preview.nvim
-npx --yes yarn install
-npx --yes yarn build
+npm install
+npm run build
 ```
 
-Please make sure that you have installed `node.js` and `yarn`.
+Please make sure that you have installed Node.js 24 or newer and `npm`.
 Open `nvim` and run `:PackerInstall` to make it workable
 
 ### MarkdownPreview Config:
@@ -189,7 +148,6 @@ let g:mkdp_browserfunc = ''
 "   top: means the Vim top viewport always shows up at the top of the preview page
 "   relative: means the cursor position is always at relative positon of the preview page
 " hide_yaml_meta: whether to hide YAML metadata, default is 1
-" sequence_diagrams: js-sequence-diagrams options
 " content_editable: if enable content editable for preview page, default: v:false
 " disable_filename: if disable filename header for preview page, default: 0
 let g:mkdp_preview_options = {
@@ -200,7 +158,6 @@ let g:mkdp_preview_options = {
     \ 'disable_sync_scroll': 0,
     \ 'sync_scroll_type': 'middle',
     \ 'hide_yaml_meta': 1,
-    \ 'sequence_diagrams': {},
     \ 'flowchart_diagrams': {},
     \ 'content_editable': v:false,
     \ 'disable_filename': 0,
@@ -324,14 +281,6 @@ Or
         activity :active, 01-02-2019, 03-08-2019
     ```
 
-**js-sequence-diagrams:**
-
-    ``` sequence-diagrams
-    Andrew->China: Says
-    Note right of China: China thinks\nabout it
-    China-->Andrew: How are you?
-    Andrew->>China: I am good thanks!
-    ```
 **Flowchart:**
 
     ``` flowchart
@@ -468,7 +417,6 @@ Vim support is powered by [@chemzqm/neovim](https://github.com/neoclide/neovim)
 - [chart.js](https://github.com/chartjs/Chart.js)
 - [highlight](https://github.com/highlightjs/highlight.js)
 - [neovim/node-client](https://github.com/neovim/node-client)
-- [next.js](https://github.com/zeit/next.js)
 - [markdown.css](https://github.com/iamcco/markdown.css)
 - [markdown-it](https://github.com/markdown-it/markdown-it)
 - [markdown-it-katex](https://github.com/waylonflinn/markdown-it-katex)
@@ -476,7 +424,6 @@ Vim support is powered by [@chemzqm/neovim](https://github.com/neoclide/neovim)
 - [markdown-it-chart](https://github.com/tylingsoft/markdown-it-chart)
 - [mermaid](https://github.com/knsv/mermaid)
 - [opener](https://github.com/domenic/opener)
-- [sequence-diagrams](https://github.com/bramp/js-sequence-diagrams)
 - [socket.io](https://github.com/socketio/socket.io)
 
 ### Buy Me A Coffee ☕️

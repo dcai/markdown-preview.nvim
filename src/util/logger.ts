@@ -1,7 +1,7 @@
-import fs from 'fs'
+import fs from 'node:fs'
 import log4js from 'log4js'
-import os from 'os'
-import path from 'path'
+import os from 'node:os'
+import path from 'node:path'
 
 const MAX_LOG_SIZE = 1024 * 1024
 const MAX_LOG_BACKUPS = 10
@@ -26,8 +26,6 @@ if (!isRoot) {
         backups: MAX_LOG_BACKUPS,
         layout: {
           type: 'pattern',
-          // Format log in following pattern:
-          // yyyy-MM-dd HH:mm:ss.mil $Level (pid:$pid) $categroy - $message.
           pattern: `%d{yyyy-MM-dd hh:mm:ss} %p (pid:${process.pid}) [%c] - %m`
         }
       }
@@ -38,6 +36,6 @@ if (!isRoot) {
   })
 }
 
-module.exports = (name = 'mkdp'): log4js.Logger => {
+export default function logger(name = 'mkdp'): log4js.Logger {
   return log4js.getLogger(name)
 }

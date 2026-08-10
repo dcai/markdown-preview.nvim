@@ -4,9 +4,9 @@ exports.run = function () {
   const http = require('http')
   const websocket = require('socket.io')
 
-  const opener = require('./lib/util/opener')
-  const logger = require('./lib/util/logger')('app/server')
-  const { getIP } = require('./lib/util/getIP')
+  const opener = require('../src/util/opener.ts').default
+  const logger = require('../src/util/logger.ts').default('app/server')
+  const { getIP } = require('../src/util/getIP.ts')
   const routes = require('./routes')
 
   let clients = {}

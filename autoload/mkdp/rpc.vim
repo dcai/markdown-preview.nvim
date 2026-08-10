@@ -38,12 +38,10 @@ function! s:start_vim_server(cmd) abort
 endfunction
 
 function! mkdp#rpc#start_server() abort
-  let l:mkdp_server_script = s:mkdp_root_dir . '/app/bin/markdown-preview-' . mkdp#util#get_platform()
-  if executable(l:mkdp_server_script)
-    let l:cmd = [l:mkdp_server_script, '--path', s:mkdp_root_dir . '/app/server.js']
-  elseif executable('node')
+  let l:node = exepath('node')
+  if !empty(l:node)
     let l:mkdp_server_script = s:mkdp_root_dir . '/app/index.js'
-    let l:cmd = ['node', l:mkdp_server_script, '--path', s:mkdp_root_dir . '/app/server.js']
+    let l:cmd = [l:node, l:mkdp_server_script]
   endif
   if exists('l:cmd')
     if s:is_vim
@@ -58,7 +56,7 @@ function! mkdp#rpc#start_server() abort
       let s:mkdp_channel_id = jobstart(l:cmd, l:nvim_optons)
     endif
   else
-    call mkdp#util#echo_messages('Error', 'Pre build and node is not found')
+    call mkdp#util#echo_messages('Error', 'Node.js executable not found')
   endif
 endfunction
 
